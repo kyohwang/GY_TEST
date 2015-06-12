@@ -9,10 +9,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import kyo.Utils;
+import kyo.Node;
+import kyo.NodeServer;
 
 import com.turn.ttorrent.bcodec.BDecoder;
 import com.turn.ttorrent.bcodec.BEValue;
@@ -36,16 +39,25 @@ public class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        		bytes[i] = buffer.get(i);
 	        	}
 	        	Map<String, BEValue> p = BDecoder.bdecode(new ByteArrayInputStream(bytes)).getMap();
+	        	
 	        	if(p.containsKey("q")){
 	        		String q = p.get("q").getString();
 	        		if(q.equals("ping")){
 	        			//ping
 	        			Map<String,BEValue> ping = new HashMap<String,BEValue>();
-	        			ping.put("id", new BEValue(Utils.id));
+	        			ping.put("id", new BEValue(NodeServer.id));
 	        			this.send(ctx, packet.sender(), new BEValue(ping));
 	        		}else if(q.equals("find_node")){
 	        			//find_node
-	        			
+	        			Map<String, BEValue> a = p.get("a").getMap();
+	        			byte[] id = a.get("id").getBytes();
+	        			byte[] target = a.get("target").getBytes();
+	        			List<Node> nodes = new ArrayList<Node>();
+	        			if(Node.match(NodeServer.id, target)){
+	        				nodes.add(new Node())
+	        			}else{
+	        				
+	        			}
 	        			
 	        		}else if(q.equals("get_peers")){
 	        			//get_peers

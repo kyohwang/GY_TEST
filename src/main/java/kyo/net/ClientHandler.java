@@ -6,18 +6,33 @@ import io.netty.channel.socket.DatagramPacket;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import kyo.Node;
+import kyo.NodeServer;
+import kyo.Peer;
 import kyo.Utils;
-import kyo.WorkList;
+import kyo.Worker;
 
 import com.turn.ttorrent.bcodec.BDecoder;
 import com.turn.ttorrent.bcodec.BEValue;
+import com.turn.ttorrent.bcodec.InvalidBEncodingException;
 
 public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
+	
+	
+	private void pingReturn(Map<String, BEValue> r, DatagramPacket packet){
+		try {
+			BEValue id = r.get("id");
+			Node node = new Node(id.getBytes(),packet.sender().getAddress().getHostAddress(),
+					packet.sender().getPort());
+			NodeServer.addNode(node);
+		} catch (InvalidBEncodingException e) {
+			e.printStackTrace();
+		}
+	}
 
 	 @Override
 	    public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
@@ -41,42 +56,34 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        		String t = p.get("t").getString();
 	        		Map<String, BEValue> r = p.get("r").getMap();
 	        		if(t.equals("pn")){
-	        			BEValue id = r.get("id");
-	        			System.out.println("ping return:" + Arrays.toString(id.getBytes()));
-	        			
-//	        			System.out.println(packet.sender().getAddress().getHostAddress());
-//	        			System.out.println(packet.sender().getPort());
-	        			Node node = new Node(id.getBytes(),packet.sender().getAddress().getHostAddress(),
-	        					packet.sender().getPort());
-	        			Utils.bucket.add(node);
-	        			
-	        		}else if(t.equals("fd")){
-	        			
+	        			//ping return
+	        			this.pingReturn(r, packet);
+	        		}else if(t.startsWith("fd_")){
+	        			//find_node return
 	        			byte[] nodeBytes = r.get("nodes").getBytes();
 	        			ByteArrayInputStream in = new ByteArrayInputStream(nodeBytes);
 	        			for(int i = 0; i*26 < nodeBytes.length; i++){
 	        				byte[]  nodeId = new byte[20];
 	        				in.read(nodeId, 0, 20);
 	        				StringBuffer sb = new StringBuffer();
-	        				sb.append(/*nodeBytes[i*26+20]*/in.read()).append(".");
-	        				sb.append(/*nodeBytes[i*26+21]*/in.read()).append(".");
-	        				sb.append(/*nodeBytes[i*26+22]*/in.read()).append(".");
-	        				sb.append(/*nodeBytes[i*26+23]*/in.read());
+	        				sb.append(in.read()).append(".");
+	        				sb.append(in.read()).append(".");
+	        				sb.append(in.read()).append(".");
+	        				sb.append(in.read());
 	        				String ip = sb.toString();
-	        				int port = (/*nodeBytes[i*26+24]*/in.read() << 8)+ in.read()/*nodeBytes[i*26+25]*/;
-//	        				System.out.println(Arrays.toString(nodeId));
-//	        				System.out.println(ip + ":" + port);
-	        				Utils.nodes.put(ip, port);
+	        				int port = (in.read() << 8)+ in.read();
+	        				Node node = new Node(nodeId,ip,port);
+	        				
+	        				NodeServer.addNode(node);
+	        				NodeServer.checkFinishFindNode(t.split("_")[1], node);
 	        			}
 	        			
-	        		}else if(t.startsWith("gp")){
+	        		}else if(t.startsWith("gp_")){
 	        			
 	        			BEValue id = r.get("id");
-	        			
 	        			if(r.containsKey("values")){
-	        				Utils.works.remove(t);
 	        				List<BEValue> values = r.get("values").getList();
-	        				System.err.println("gp done!!!");
+	        				List<Peer> peers = new ArrayList<Peer>();
 	        				for(BEValue value : values){
 	        					byte[] vbs = value.getBytes();
 	        					ByteArrayInputStream in = new ByteArrayInputStream(vbs);
@@ -87,12 +94,15 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 		        				sb.append(in.read());
 		        				String ip = sb.toString();
 		        				int port = (in.read() << 8)+ in.read();
-		        				System.out.println(ip + ":" + port);
+		        				peers.add(new Peer(ip,port));
 	        				}
+	        				
+	        				NodeServer.finishGetPeer(t.split("_")[1], peers);
 	        			}else{
 	        				byte[] nodeBytes = r.get("nodes").getBytes();
 		        			ByteArrayInputStream in = new ByteArrayInputStream(nodeBytes);
-	        				WorkList list = Utils.works.get(t);
+	        				Worker worker =NodeServer.getWorker(t.split("_")[1]);
+	        				if(worker == null) return;
 		        			for(int i = 0; i*26 < nodeBytes.length; i++){
 		        				byte[]  nodeId = new byte[20];
 		        				in.read(nodeId, 0, 20);
@@ -103,14 +113,11 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 		        				sb.append(in.read());
 		        				String ip = sb.toString();
 		        				int port = (in.read() << 8)+ in.read();
-		        				Utils.nodes.put(ip, port);
 		        				Node node = new Node(nodeId, ip, port);
-		        				if(list != null){
-		        					list.add(node);
-		        				}
+		        				worker.add(node);
 		        			}
+		        			worker.goOn();
 	        			}
-	        			
 	        			
 	        		}
 	        	}

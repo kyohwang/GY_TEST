@@ -5,15 +5,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.xmlbeans.impl.util.HexBin;
-
-
-
-
-public class WorkList {
+public abstract class Worker {
 	
-	List<Node> list = new ArrayList<Node>();
-	byte[] targetId;
+	protected List<Node> list = new ArrayList<Node>();
+	protected byte[] targetId;
+	protected int tryedTimes;
+	protected int maxTimes = 100;
+	protected String taskId;
+	protected long startTime;
 	
 	Comparator<Node> comp = new Comparator<Node>(){
 
@@ -39,9 +38,11 @@ public class WorkList {
 		
 	};
 	
-	public WorkList(byte[]  targetId, List<Node> list){
+	public Worker(String taskId, byte[]  targetId, List<Node> list){
 		this.targetId = targetId;
 		this.list.addAll(list);
+		this.taskId = taskId;
+		this.startTime = System.currentTimeMillis();
 	}
 	
 	public synchronized void add(Node node){
@@ -81,4 +82,31 @@ public class WorkList {
 		}
 		return id0;
 	}
+
+	public byte[] getTargetId() {
+		return targetId;
+	}
+
+	public int getTryedTimes() {
+		return tryedTimes;
+	}
+
+	public int getMaxTimes() {
+		return maxTimes;
+	}
+
+	public void setTargetId(byte[] targetId) {
+		this.targetId = targetId;
+	}
+
+	public void setTryedTimes(int tryedTimes) {
+		this.tryedTimes = tryedTimes;
+	}
+
+	public void setMaxTimes(int maxTimes) {
+		this.maxTimes = maxTimes;
+	}
+	
+	public abstract void goOn();
+
 }

@@ -26,7 +26,7 @@ public class UdpSender {
 	         .channel(NioDatagramChannel.class)
 	         .option(ChannelOption.SO_BROADCAST, true)
 	         .handler(new ClientHandler());
-	        ch = b.bind(0).sync().channel();
+	        ch = b.bind(6881).sync().channel();
 	    } catch(Exception e) {
 	        e.printStackTrace();
 	    }
