@@ -10,6 +10,8 @@ public class NodeServer {
 	
 	/**本机ID*/
 	public static byte[]  id;
+	public static String ip = "52.69.93.93";
+	public static int port = 6881;
 	private static Bucket bucket;
 	/**
 	 * 可能已经掉线的node，测试，再不返回就干掉

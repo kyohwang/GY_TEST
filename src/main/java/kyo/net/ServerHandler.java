@@ -54,9 +54,9 @@ public class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        			byte[] target = a.get("target").getBytes();
 	        			List<Node> nodes = new ArrayList<Node>();
 	        			if(Node.match(NodeServer.id, target)){
-	        				nodes.add(new Node())
+	        				nodes.add(new Node(NodeServer.id,NodeServer.ip,NodeServer.port));
 	        			}else{
-	        				
+	        				  
 	        			}
 	        			
 	        		}else if(q.equals("get_peers")){

@@ -1,10 +1,10 @@
 package kyo.net;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import kyo.NodeServer;
 
 public class NettyService {
 
@@ -20,7 +20,7 @@ public class NettyService {
              .channel(NioDatagramChannel.class)
              .handler(new ServerHandler());
 
-            b.bind(6881).sync().channel();
+            b.bind(NodeServer.port).sync().channel();
         } finally {
 //            group.shutdownGracefully();
         }
