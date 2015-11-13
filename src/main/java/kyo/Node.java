@@ -1,5 +1,7 @@
 package kyo;
 
+import org.apache.xmlbeans.impl.util.HexBin;
+
 public class Node {
 	
 		/**
@@ -78,6 +80,13 @@ public class Node {
 			return true;
 		}
 		
-		
+		public String log(){
+			StringBuilder sb = new StringBuilder();
+			String CR = ",";
+			sb.append(CR).append(HexBin.bytesToString(id))
+			.append(CR).append(ip)
+			.append(CR).append(port);
+			return sb.toString();
+		}
 		
 }

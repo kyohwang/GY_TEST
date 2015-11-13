@@ -20,10 +20,13 @@ import kyo.net.UdpSender;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.xmlbeans.impl.util.HexBin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.turn.ttorrent.bcodec.BEValue;
 
 public class Utils {
+	static Logger log = LoggerFactory.getLogger(NettyService.class);
 	
 	private static UdpSender sender = new UdpSender();
 	private static AtomicInteger taskId = new AtomicInteger();
@@ -71,8 +74,7 @@ public class Utils {
 //	public static ConcurrentHashMap<String,Integer> nodes = new ConcurrentHashMap<String, Integer>();
 	
 	public static void main(String[] args) throws Exception {
-			NettyService ns = new NettyService();
-			ns.startup();
+			
 			
 			/*nodes.clear();
 			nodes.put("42.202.213.210", 6881);*/
@@ -96,6 +98,10 @@ public class Utils {
 		try {
 			t = Torrent.load(file);
 			HashMap<String,Integer> nodes = t.getNodes();
+			
+			for(String ip : nodes.keySet()){
+				log.info("Get node from file    " + ip + ":" +nodes.get(ip));
+			}
 			return nodes;
 		} catch (IOException e) {
 			e.printStackTrace();

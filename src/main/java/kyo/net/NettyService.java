@@ -6,23 +6,37 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import kyo.NodeServer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class NettyService {
+Logger log = LoggerFactory.getLogger(NettyService.class);
 
+/*	EventLoopGroup bossGroup = new NioEventLoopGroup(); 
+    EventLoopGroup workerGroup = new NioEventLoopGroup();*/
 
-	EventLoopGroup bossGroup = new NioEventLoopGroup(); 
-    EventLoopGroup workerGroup = new NioEventLoopGroup();
-	
+	EventLoopGroup group;
+
+	public void shutdown(){
+		if(group != null){
+			group.shutdownGracefully();
+		}
+	}
+
 	public void startup() throws Exception {
-		EventLoopGroup group = new NioEventLoopGroup();
         try {
+        	group = new NioEventLoopGroup();
             Bootstrap b = new Bootstrap();
             b.group(group)
              .channel(NioDatagramChannel.class)
              .handler(new ServerHandler());
 
             b.bind(NodeServer.port).sync().channel();
-        } finally {
-//            group.shutdownGracefully();
+            
+            log.info("listen on : " +NodeServer.port);
+        }catch(Exception e){
+        	e.printStackTrace();
+        	throw e;
         }
 	}
 

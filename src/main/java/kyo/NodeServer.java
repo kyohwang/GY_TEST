@@ -1,16 +1,22 @@
 package kyo;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import kyo.net.NettyService;
+
+import org.apache.log4j.Logger;
+
 public class NodeServer {
+	
+	private static Logger  log = Logger.getLogger(NodeServer.class);
 	
 	/**本机ID*/
 	public static byte[]  id;
-	public static String ip = "52.69.93.93";
+	public static String ip = "123.114.110.200";
 	public static int port = 6881;
 	private static Bucket bucket;
 	/**
@@ -42,6 +48,7 @@ public class NodeServer {
 	 *  添加节点到森林
 	 */
 	public static void addNode(Node node){
+		log.info(",addNode,"+node.log());
 		bucket.addNode(node);
 	}
 	
@@ -88,9 +95,16 @@ public class NodeServer {
 		}
 	}
 	
-	public static void main(String[] args){
-
+	public static void main(String[] args) throws Exception{
+//		NettyService ns = new NettyService();
+//		ns.startup();
 	
+		HashMap<String,Integer> nodes = Utils.getNodesFromTorrentFiles("E:/test/bittorrent/files");
+		
+		
+		
+//		Thread.sleep(24*3600*1000);
+//		ns.shutdown();
 	}
 
 }
