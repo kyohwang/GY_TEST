@@ -15,9 +15,9 @@ public class NodeServer {
 	private static Logger  log = Logger.getLogger(NodeServer.class);
 	
 	/**本机ID*/
-	public static byte[]  id;
-	public static String ip = "123.114.110.200";
-	public static int port = 6881;
+	public static byte[]  LOCAL_ID;
+	public static String LOCAL_IP = "123.114.110.200";
+	public static int LOCAL_PORT = 6881;
 	private static Bucket bucket;
 	/**
 	 * 可能已经掉线的node，测试，再不返回就干掉
@@ -33,8 +33,8 @@ public class NodeServer {
 	
 	static{
 		try {
-			id = "niubi098765432345787".getBytes("utf-8");
-			bucket = new Bucket(id);
+			LOCAL_ID = "niubi098765432345787".getBytes("utf-8");
+			bucket = new Bucket(LOCAL_ID);
 			pingList = new CopyOnWriteArrayList<Node>();
 			works = new ConcurrentHashMap<String, Worker>();
 		} catch (UnsupportedEncodingException e) {
@@ -48,7 +48,7 @@ public class NodeServer {
 	 *  添加节点到森林
 	 */
 	public static void addNode(Node node){
-		log.info(",addNode,"+node.log());
+		log.info(",addNode"+node.log());
 		bucket.addNode(node);
 	}
 	
@@ -95,16 +95,40 @@ public class NodeServer {
 		}
 	}
 	
+	public static Bucket getBucket() {
+		return bucket;
+	}
+
 	public static void main(String[] args) throws Exception{
 //		NettyService ns = new NettyService();
 //		ns.startup();
-	
-		HashMap<String,Integer> nodes = Utils.getNodesFromTorrentFiles("E:/test/bittorrent/files");
+		
+/*		String ip = "192.168.1.1";
+		String[] ips = ip.split(".");
+		for(String i : ips){
+			System.out.println(i);
+		}*/
+		
+		Utils.startup();
+		new Thread(new NodeChecker(bucket),"nodeChecker").start();
+		new Thread(new NodeFinder(bucket),"nodeFinder").start();
 		
 		
+
 		
-//		Thread.sleep(24*3600*1000);
+		Thread.sleep(24*3600*1000);
+		Utils.shutdown();
+		
 //		ns.shutdown();
+	}
+	
+	public static void startFromFiles(){
+		HashMap<String,Integer> nodes = Utils.getNodesFromTorrentFiles("E:/test/bittorrent/files");
+		for(String ip : nodes.keySet()){
+			int port = nodes.get(ip);
+			Utils.ping(LOCAL_ID, ip, port);
+			log.info("Load File:" +ip + " " + port);
+		}
 	}
 
 }

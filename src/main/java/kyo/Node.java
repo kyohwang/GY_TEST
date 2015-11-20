@@ -16,6 +16,9 @@ public class Node {
 		 * 节点端口
 		 */
 		private int port;
+		
+		private long lastActive = System.currentTimeMillis();
+		private int triedTimes = 0;
 				
 		public byte[] getId() {
 			return id;
@@ -89,4 +92,28 @@ public class Node {
 			return sb.toString();
 		}
 		
+		/**
+		 * 10分钟过期，需要重新检查是否活跃
+		 * @return
+		 */
+		public boolean isOverdue(){
+			if(System.currentTimeMillis() - this.lastActive > 1*60*1000){
+				 Utils.ping(NodeServer.LOCAL_ID, this);
+				 this.triedTimes++;
+				 this.lastActive = System.currentTimeMillis();
+			}
+			return this.triedTimes >= 15;
+		}
+		public long getLastActive() {
+			return lastActive;
+		}
+		public int getTriedTimes() {
+			return triedTimes;
+		}
+		public void setLastActive(long lastActive) {
+			this.lastActive = lastActive;
+		}
+		public void setTriedTimes(int triedTimes) {
+			this.triedTimes = triedTimes;
+		}
 }

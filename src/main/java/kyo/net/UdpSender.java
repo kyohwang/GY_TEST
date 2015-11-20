@@ -12,6 +12,8 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.io.ByteArrayOutputStream;
 import java.net.InetSocketAddress;
 
+import kyo.NodeServer;
+
 import com.turn.ttorrent.bcodec.BEValue;
 import com.turn.ttorrent.bcodec.BEncoder;
 
@@ -26,21 +28,22 @@ public class UdpSender {
 	         .channel(NioDatagramChannel.class)
 	         .option(ChannelOption.SO_BROADCAST, true)
 	         .handler(new ClientHandler());
-	        ch = b.bind(6881).sync().channel();
+	        ch = b.bind(NodeServer.LOCAL_PORT).sync().channel();
 	    } catch(Exception e) {
 	        e.printStackTrace();
 	    }
 	}
 	
-	
-	
-@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void shutdown(){
 		if(group != null){
 			group.shutdownGracefully();
 			group = null;
 		}
+	}
+	
+@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
 	}
 
 

@@ -28,7 +28,7 @@ import com.turn.ttorrent.bcodec.BEValue;
 public class Utils {
 	static Logger log = LoggerFactory.getLogger(NettyService.class);
 	
-	private static UdpSender sender = new UdpSender();
+	private static UdpSender sender;
 	private static AtomicInteger taskId = new AtomicInteger();
 
 	/***/
@@ -127,7 +127,7 @@ public class Utils {
 	public static void ping(byte[] selfId, String ip, int port){
 		try {
 			Map<String,BEValue> ping = new HashMap<String,BEValue>();
-			ping.put("t", new BEValue("pn"));
+			ping.put("t", new BEValue("pn_"+getNextTaskId()));
 			ping.put("y", new BEValue("q"));
 			ping.put("q", new BEValue("ping"));
 	
@@ -135,6 +135,7 @@ public class Utils {
 			a.put("id", new BEValue(selfId));
 			ping.put("a", new BEValue(a));
 			sender.send(new InetSocketAddress(ip,port), new BEValue(ping));
+			log.info("PING : " + ip + " " + port);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -149,7 +150,7 @@ public class Utils {
 	 * @param infoHahs  种子文件的指纹
 	 */
 	public static void get_peer(byte[] infoHash, String taskId,Node node){
-		get_peer(NodeServer.id, infoHash, taskId, node.getIp(), node.getPort());
+		get_peer(NodeServer.LOCAL_ID, infoHash, taskId, node.getIp(), node.getPort());
 	}
 	
 	/**
@@ -220,7 +221,7 @@ public class Utils {
 	 * @param Node 询问对象
 	 */
 	public static void findNode(byte[] targetID, String taskId, Node node){
-		 findNode(NodeServer.id,targetID,taskId,node.getIp(),node.getPort());
+		 findNode(NodeServer.LOCAL_ID,targetID,taskId,node.getIp(),node.getPort());
 	}
 	
 	
@@ -278,8 +279,13 @@ public class Utils {
 	}
 	
 	
+	public static void startup(){
+		sender = new UdpSender();
+	}
 	
-	
+	public static void shutdown(){
+		sender.shutdown();
+	}
 	
 	
 

@@ -31,9 +31,9 @@ Logger log = LoggerFactory.getLogger(NettyService.class);
              .channel(NioDatagramChannel.class)
              .handler(new ServerHandler());
 
-            b.bind(NodeServer.port).sync().channel();
+            b.bind(NodeServer.LOCAL_PORT).sync().channel();
             
-            log.info("listen on : " +NodeServer.port);
+            log.info("listen on : " +NodeServer.LOCAL_PORT);
         }catch(Exception e){
         	e.printStackTrace();
         	throw e;

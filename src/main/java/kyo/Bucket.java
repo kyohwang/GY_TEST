@@ -1,7 +1,8 @@
 package kyo;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Bucket {
@@ -11,7 +12,7 @@ public class Bucket {
 	/**
 	 * 按照自身ID构建的节点森林
 	 */
-	private HashMap<Integer,List<Node>> tree = new HashMap<Integer, List<Node>>();
+	private ConcurrentHashMap<Integer,List<Node>> tree = new ConcurrentHashMap<Integer, List<Node>>();
 
 	private byte[] id;
 	
@@ -42,6 +43,8 @@ public class Bucket {
 			for(Node n : list){
 			//避免重复添加
 				if(n.equals(node)){
+					n.setTriedTimes(0);
+					n.setLastActive(System.currentTimeMillis());
 					return;
 				}
 			}
@@ -73,6 +76,34 @@ public class Bucket {
 		return tree.get(prefix);
 	}
 	
+	/**
+	 * @param nid
+	 * @return 所在子树的所有节点
+	 */
+	public List<Node> getNodes(int count, byte[] nid){
+		int prefix = this.getPrefix(nid);
+		List<Node> tmp =  tree.get(prefix);
+		List<Node> rst = new ArrayList<Node>();
+		if(tmp != null){
+			for(int i = 0;i < tmp.size() && i < count; i++){
+				rst.add(tmp.get(i));
+			}
+		}
+		if(rst.size() < count){
+			for(List<Node> list : tree.values()){
+				for(Node node : list){
+					if(rst.size() >= count){
+						return rst;
+					}else{
+						rst.add(node);
+					}
+				}
+			}
+		}
+		
+		return rst;
+	}
+	
 	public Node getNode(byte[] nid){
 		int prefix = this.getPrefix(nid);
 		List<Node> list = tree.get(prefix);
@@ -91,17 +122,18 @@ public class Bucket {
 	 */
 	public int getPrefix(byte[] nid){
 		
-		for(int i = 0; i < id.length*8; i++){
+		for(int i = 0; i < id.length; i++){
 			if(id[i] != nid[i]){
-				int tmp = id[i] ^ nid[i];
 				int max = 0;
-				while(tmp>2){
-					tmp /= 2;
-					max++;
+				for(int m = 0; m < 8; m++){
+					if(id[i] >> m == nid[i] >>m){
+						break;
+					}else{
+						max++;
+					}
 				}
-				max++;
 				
-				return i * 8 + (8 - max);
+				return i * 8 + (8 - max) +1;
 			}
 		}
 		return 160;
@@ -113,6 +145,19 @@ public class Bucket {
 
 	public void setId(byte[] id) {
 		this.id = id;
+	}
+
+	public ConcurrentHashMap<Integer, List<Node>> getTree() {
+		return tree;
+	}
+	
+	
+	public int getNodeSize(){
+		int size = 0;
+		for(List<Node> list : tree.values()){
+			size += list.size();
+		}
+		return size;
 	}
 	
 }
