@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import kyo.GetPeerWorker;
 import kyo.Node;
@@ -37,7 +38,8 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	private static Logger  hash = Logger.getLogger("hash");
 	
 	
-	public static Set<String> hashes = new HashSet<String>();
+	public static CopyOnWriteArrayList<String> hashes = new CopyOnWriteArrayList<String>();
+	public static CopyOnWriteArrayList<String> infohashes = new CopyOnWriteArrayList<String>();
 	
 	private void pingReturn(Map<String, BEValue> r, DatagramPacket packet){
 		try {

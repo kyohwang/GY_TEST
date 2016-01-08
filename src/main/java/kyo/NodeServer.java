@@ -122,6 +122,7 @@ public class NodeServer {
 		Utils.startup();
 		new Thread(new NodeChecker(bucket),"nodeChecker").start();
 		new Thread(new NodeFinder(bucket),"nodeFinder").start();
+		new Thread(new Downloader(),"downloader").start();
 		
 		while(true){
 			Thread.sleep(600);
