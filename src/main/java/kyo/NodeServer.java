@@ -1,14 +1,20 @@
 package kyo;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import kyo.net.NettyService;
+import org.apache.commons.configuration.PropertiesConfiguration;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+
 
 public class NodeServer {
 	
@@ -30,14 +36,24 @@ public class NodeServer {
 	 */
 	private static ConcurrentHashMap<String,Worker> works;
 	
+	public static Set<String> blackList = new HashSet<String>();
 	
-	static{
+	
+	private static void init(){
 		try {
+			String dir = System.getProperty("user.dir");
+			PropertyConfigurator.configure(dir+"/log4j.properties");
+			
 			LOCAL_ID = "niubi098765432345787".getBytes("utf-8");
 			bucket = new Bucket(LOCAL_ID);
 			pingList = new CopyOnWriteArrayList<Node>();
 			works = new ConcurrentHashMap<String, Worker>();
-		} catch (UnsupportedEncodingException e) {
+			
+			PropertiesConfiguration config = new PropertiesConfiguration("config.properties"); 
+        	LOCAL_IP = config.getString("ip");
+        	LOCAL_PORT = config.getInt("port");
+			
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -100,30 +116,29 @@ public class NodeServer {
 	}
 
 	public static void main(String[] args) throws Exception{
-//		NettyService ns = new NettyService();
-//		ns.startup();
-		
-/*		String ip = "192.168.1.1";
-		String[] ips = ip.split(".");
-		for(String i : ips){
-			System.out.println(i);
-		}*/
+
+		NodeServer.init();
 		
 		Utils.startup();
 		new Thread(new NodeChecker(bucket),"nodeChecker").start();
 		new Thread(new NodeFinder(bucket),"nodeFinder").start();
 		
-		
-
-		
-		Thread.sleep(24*3600*1000);
-		Utils.shutdown();
-		
-//		ns.shutdown();
+		while(true){
+			Thread.sleep(600);
+			for(Worker w : works.values()){
+				w.goOn();
+			}
+		}
+	}
+	
+	public static void addWorker(Worker w){
+		if(works.size() < 1000){
+			works.put(w.getTaskId(), w);
+		}
 	}
 	
 	public static void startFromFiles(){
-		HashMap<String,Integer> nodes = Utils.getNodesFromTorrentFiles("E:/test/bittorrent/files");
+		HashMap<String,Integer> nodes = Utils.getNodesFromTorrentFiles("data");
 		for(String ip : nodes.keySet()){
 			int port = nodes.get(ip);
 			Utils.ping(LOCAL_ID, ip, port);

@@ -45,6 +45,14 @@ public abstract class Worker {
 		this.startTime = System.currentTimeMillis();
 	}
 	
+	public String getTaskId() {
+		return taskId;
+	}
+
+	public void setTaskId(String taskId) {
+		this.taskId = taskId;
+	}
+
 	public synchronized void add(Node node){
 		
 		list.add(node);

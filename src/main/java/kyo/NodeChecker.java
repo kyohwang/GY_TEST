@@ -20,6 +20,7 @@ public class NodeChecker implements Runnable {
 			try{
 				if(this.bucket.getNodeSize() == 0){
 					NodeServer.startFromFiles();
+					
 				}
 				Thread.sleep(1*60*1000);
 				log.info("Node size : " + this.bucket.getNodeSize());

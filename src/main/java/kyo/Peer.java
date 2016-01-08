@@ -24,6 +24,10 @@ public class Peer {
 		this.ip = ip;
 		this.port = port;
 	}
+	@Override
+	public String toString() {
+		return ip + " " + port;
+	}
 	
 	
 	

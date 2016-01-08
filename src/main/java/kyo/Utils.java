@@ -48,9 +48,10 @@ public class Utils {
 	 * @param path
 	 * @return  从指定路径下的种子文件中获取node信息
 	 */
-	public static HashMap<String,Integer> getNodesFromTorrentFiles(String path){
+	public static HashMap<String,Integer> getNodesFromTorrentFiles(String fileName){
 		HashMap<String,Integer> nodes = new HashMap<String, Integer>();
-		File file = new File(path);
+		String dir = System.getProperty("user.dir");
+		File file = new File(dir,fileName);
 		FilenameFilter filter = new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
