@@ -5,18 +5,18 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import kyo.net.ClientHandler;
 
 import org.apache.commons.codec.binary.Base32;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
-import kyo.net.ClientHandler;
-
 
 public class Downloader implements Runnable{
 	
-	public static CopyOnWriteArrayList<String> hashes = new CopyOnWriteArrayList<String>();
+	public static CopyOnWriteArraySet<String> hashes = new CopyOnWriteArraySet<String>();
 	
 	static final String XunLei = "http://bt.box.n0808.com/{0}/{1}/{2}.torrent";
 	static final String Vuze = "http://magnet.vuze.com/magnetLookup?hash={0}";
@@ -27,7 +27,7 @@ public class Downloader implements Runnable{
 		while(true){
 			try{
 				Thread.sleep(20000);
-				for(String infoHash : ClientHandler.hashes){
+				for(String infoHash : ClientHandler.infohashes){
 					if(!hashes.contains(infoHash)){
 						if(downFromXL(infoHash)
 								|| downFromVuze(infoHash)

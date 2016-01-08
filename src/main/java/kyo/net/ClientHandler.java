@@ -11,11 +11,10 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import kyo.GetPeerWorker;
 import kyo.Node;
@@ -39,7 +38,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	
 	
 	public static CopyOnWriteArrayList<String> hashes = new CopyOnWriteArrayList<String>();
-	public static CopyOnWriteArrayList<String> infohashes = new CopyOnWriteArrayList<String>();
+	public static CopyOnWriteArraySet<String> infohashes = new CopyOnWriteArraySet<String>();
 	
 	private void pingReturn(Map<String, BEValue> r, DatagramPacket packet){
 		try {
@@ -222,6 +221,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        				Worker w = new GetPeerWorker(Utils.getNextTaskId(), infoHash, NodeServer.getBucket().getNodes(infoHash));
 	        				NodeServer.addWorker(w);
 	        			}
+	        			infohashes.add(ih);
 	        			
 	        			Utils.ping(NodeServer.LOCAL_ID, packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
 	        		}else if(q.equals("announce_peer")){
