@@ -52,10 +52,10 @@ public class UdpSender {
 
 
 public void send(InetSocketAddress add, BEValue value) throws Exception{
-	if(NodeServer.blackList.contains(add.getHostString())){
+	if(NodeServer.blackList.contains(add.getAddress().getHostAddress())){
  		return;
  	}
-	if(add.getHostString().contains(NodeServer.LOCAL_IP)){
+	if(add.getAddress().getHostAddress().contains(NodeServer.LOCAL_IP)){
 		return;
 	}
 	if(!ch.isActive() || !ch.isOpen() || !ch.isRegistered() || !ch.isWritable()){

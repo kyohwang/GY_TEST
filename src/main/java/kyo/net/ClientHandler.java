@@ -256,7 +256,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	    }
 	    
 		 public void send(ChannelHandlerContext ctx, InetSocketAddress add, BEValue value) throws Exception{
-			 	if(NodeServer.blackList.contains(add.getHostString())){
+			 	if(NodeServer.blackList.contains(add.getAddress().getHostAddress())){
 			 		return;
 			 	}
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();

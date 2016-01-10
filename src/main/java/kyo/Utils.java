@@ -27,6 +27,7 @@ import com.turn.ttorrent.bcodec.BEValue;
 
 public class Utils {
 	static Logger log = LoggerFactory.getLogger(NettyService.class);
+	static Logger tor = LoggerFactory.getLogger("torrent");
 	
 	private static UdpSender sender;
 	private static AtomicInteger taskId = new AtomicInteger();
@@ -107,6 +108,36 @@ public class Utils {
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
+		}
+	}
+	
+	public static void printTorrents(String infoHash){
+		try{
+			File file = new File("files/" +infoHash+".torrent");
+			printTorrents(file);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	public static void printTorrents(File file){
+		Torrent t;
+		try {
+			t = Torrent.load(file);
+			HashMap<String,Integer> nodes = t.getNodes();
+			
+			StringBuilder sb = new StringBuilder();
+			sb.append(HexBin.bytesToString(t.getInfoHash())).append(",");
+			sb.append(t.getName()).append(",");
+			sb.append(t.getSize()).append(",");
+			sb.append(t.getComment()).append(",");
+			for(String fn : t.getFilenames()){
+				sb.append(fn).append(",");
+			}
+			
+			tor.info("Torrent: " + sb.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	

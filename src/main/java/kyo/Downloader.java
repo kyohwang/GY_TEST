@@ -33,6 +33,7 @@ public class Downloader implements Runnable{
 								|| downFromVuze(infoHash)
 								){
 							hashes.add(infoHash);
+							Utils.printTorrents(infoHash);
 						}
 					}
 				}
