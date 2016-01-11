@@ -182,7 +182,7 @@ public class Utils {
 	 * @param infoHahs  种子文件的指纹
 	 */
 	public static void get_peer(byte[] infoHash, String taskId,Node node){
-		get_peer(NodeServer.LOCAL_ID, infoHash, taskId, node.getIp(), node.getPort());
+		get_peer(NodeServer.getLOCAL_ID(), infoHash, taskId, node.getIp(), node.getPort());
 	}
 	
 	/**
@@ -253,7 +253,7 @@ public class Utils {
 	 * @param Node 询问对象
 	 */
 	public static void findNode(byte[] targetID, String taskId, Node node){
-		 findNode(NodeServer.LOCAL_ID,targetID,taskId,node.getIp(),node.getPort());
+		 findNode(NodeServer.getLOCAL_ID(),targetID,taskId,node.getIp(),node.getPort());
 	}
 	
 	

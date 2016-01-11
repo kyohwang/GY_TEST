@@ -1,17 +1,13 @@
 package kyo;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.apache.commons.configuration.PropertiesConfiguration;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -21,7 +17,7 @@ public class NodeServer {
 	private static Logger  log = Logger.getLogger(NodeServer.class);
 	
 	/**±¾»úID*/
-	public static byte[]  LOCAL_ID;
+	private static byte[]  LOCAL_ID;
 	public static String LOCAL_IP = "123.114.110.200";
 	public static int LOCAL_PORT = 6881;
 	private static Bucket bucket;
@@ -39,6 +35,12 @@ public class NodeServer {
 	public static Set<String> blackList = new HashSet<String>();
 	
 	
+	public static byte[] getLOCAL_ID(){
+		
+		
+		return LOCAL_ID;
+	}
+	
 	private static void init(){
 		try {
 			String dir = System.getProperty("user.dir");
@@ -52,6 +54,7 @@ public class NodeServer {
 			PropertiesConfiguration config = new PropertiesConfiguration("config.properties"); 
         	LOCAL_IP = config.getString("ip");
         	LOCAL_PORT = config.getInt("port");
+        	LOCAL_ID = config.getString("clientid").getBytes("utf-8");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -122,7 +125,9 @@ public class NodeServer {
 		Utils.startup();
 		new Thread(new NodeChecker(bucket),"nodeChecker").start();
 		new Thread(new NodeFinder(bucket),"nodeFinder").start();
-		new Thread(new Downloader(),"downloader").start();
+		Downloader down = new Downloader();
+		down.init();
+		new Thread(down,"downloader").start();
 		
 		while(true){
 			Thread.sleep(600);

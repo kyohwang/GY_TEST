@@ -98,7 +98,7 @@ public class Node {
 		 */
 		public boolean isOverdue(){
 			if(System.currentTimeMillis() - this.lastActive > 1*60*1000){
-				 Utils.ping(NodeServer.LOCAL_ID, this);
+				 Utils.ping(NodeServer.getLOCAL_ID(), this);
 				 this.triedTimes++;
 				 this.lastActive = System.currentTimeMillis();
 			}

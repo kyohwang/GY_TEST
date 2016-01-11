@@ -45,7 +45,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        		if(q.equals("ping")){
 	        			//ping
 	        			Map<String,BEValue> ping = new HashMap<String,BEValue>();
-	        			ping.put("id", new BEValue(NodeServer.LOCAL_ID));
+	        			ping.put("id", new BEValue(NodeServer.getLOCAL_ID()));
 	        			this.send(ctx, packet.sender(), new BEValue(ping));
 	        		}else if(q.equals("find_node")){
 	        			//find_node
@@ -53,8 +53,8 @@ public class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        			byte[] id = a.get("id").getBytes();
 	        			byte[] target = a.get("target").getBytes();
 	        			List<Node> nodes = new ArrayList<Node>();
-	        			if(Node.match(NodeServer.LOCAL_ID, target)){
-	        				nodes.add(new Node(NodeServer.LOCAL_ID,NodeServer.LOCAL_IP,NodeServer.LOCAL_PORT));
+	        			if(Node.match(NodeServer.getLOCAL_ID(), target)){
+	        				nodes.add(new Node(NodeServer.getLOCAL_ID(),NodeServer.LOCAL_IP,NodeServer.LOCAL_PORT));
 	        			}else{
 	        				  
 	        			}

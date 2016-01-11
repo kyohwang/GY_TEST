@@ -70,7 +70,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 			Node node = new Node(nodeId,ip,port);
 			
 //			NodeServer.addNode(node);
-			Utils.ping(NodeServer.LOCAL_ID, node);
+			Utils.ping(NodeServer.getLOCAL_ID(), node);
 			NodeServer.checkFinishFindNode(t.split("_")[1], node);
 		}
 	}
@@ -128,9 +128,9 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	private void pingRequest(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception{
 		log.info("PING: " + packet.sender().getAddress() + " " + packet.sender().getPort());
 		Map<String,BEValue> ping = new HashMap<String,BEValue>();
-		ping.put("id", new BEValue(NodeServer.LOCAL_ID));
+		ping.put("id", new BEValue(NodeServer.getLOCAL_ID()));
 		this.send(ctx, packet.sender(), new BEValue(ping));
-		Utils.ping(NodeServer.LOCAL_ID, packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
+		Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
 	}
 	
 	private void findNodeRequest(ChannelHandlerContext ctx, DatagramPacket packet, Map<String, BEValue> p, String t) throws Exception{
@@ -140,8 +140,8 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 		byte[] id = a.get("id").getBytes();
 		byte[] target = a.get("target").getBytes();
 		List<Node> nodes = new ArrayList<Node>();
-		if(Node.match(NodeServer.LOCAL_ID, target)){
-			nodes.add(new Node(NodeServer.LOCAL_ID,NodeServer.LOCAL_IP,NodeServer.LOCAL_PORT));
+		if(Node.match(NodeServer.getLOCAL_ID(), target)){
+			nodes.add(new Node(NodeServer.getLOCAL_ID(),NodeServer.LOCAL_IP,NodeServer.LOCAL_PORT));
 		}else{
 			nodes.addAll(NodeServer.getBucket().getNodes(4,target));
 		}
@@ -165,11 +165,11 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 			out.write(p2);
 		}
 		r.put("nodes", new BEValue(out.toByteArray()));
-		r.put("id", new BEValue(NodeServer.LOCAL_ID));
+		r.put("id", new BEValue(NodeServer.getLOCAL_ID()));
 		rst.put("r", new BEValue(r));
 		this.send(ctx, packet.sender(), new BEValue(rst));
 		
-		Utils.ping(NodeServer.LOCAL_ID, packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
+		Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
 	}
 
 	 @Override
@@ -223,7 +223,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        			}
 	        			infohashes.add(ih);
 	        			
-	        			Utils.ping(NodeServer.LOCAL_ID, packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
+	        			Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
 	        		}else if(q.equals("announce_peer")){
 	        			//announce_peer
 	        			log.info("ANNOUNCE: " + packet.sender().getAddress() + " " + packet.sender().getPort());

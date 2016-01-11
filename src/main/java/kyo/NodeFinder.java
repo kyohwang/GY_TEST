@@ -33,7 +33,7 @@ public class NodeFinder implements Runnable {
 					 for(Node node : list){
 						 if(!this.askedNodes.contains(node)){
 							 this.askedNodes.add(node);
-							 Utils.findNode(NodeServer.LOCAL_ID, Utils.getNextTaskId(), node);
+							 Utils.findNode(NodeServer.getLOCAL_ID(), Utils.getNextTaskId(), node);
 						 }
 					 }
 				 }
