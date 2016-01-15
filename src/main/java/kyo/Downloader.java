@@ -9,6 +9,7 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import kyo.net.ClientHandler;
@@ -24,29 +25,27 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 public class Downloader implements Runnable{
 	private static Logger  log = Logger.getLogger("world");
-	public static CopyOnWriteArraySet<String> hashes = new CopyOnWriteArraySet<String>();
-	
-	public static Map<String,Integer> counts = new HashMap<String,Integer>();
+	private static CopyOnWriteArraySet<String> success = new CopyOnWriteArraySet<String>();
+	private static CopyOnWriteArraySet<String> failures = new CopyOnWriteArraySet<String>();
+	private static ConcurrentLinkedQueue<String> todos = new ConcurrentLinkedQueue<String>();
 	
 	static final String XunLei = "http://bt.box.n0808.com/{0}/{1}/{2}.torrent";
 	static final String Vuze = "http://magnet.vuze.com/magnetLookup?hash={0}";
 	static final String TorCache = "http://torcache.net/torrent/{0}.torrent";
 	
-	public static void add(String hash){
-		Integer count = counts.get(hash);
-		if(count == null){
-			counts.put(hash, 1);
-		}else{
-			counts.put(hash, count+1);
+	
+	public static void addInfoHash(String hash){
+		if(failures.contains(hash) || success.contains(hash)){
+			return;
 		}
+		
+		todos.offer(hash);
 	}
 	
-	public boolean checkOverdue(String hash){
-		Integer count = counts.get(hash);
-		if(count != null && count > 3){
-			return true;
+	public static String nextInfoHash(){
+		synchronized(Downloader.class){
+			return todos.poll();
 		}
-		return false;
 	}
 	
 	public void init(){
@@ -63,7 +62,11 @@ public class Downloader implements Runnable{
 			}
 		};
 		for(File f : file.listFiles(filter)){
-			hashes.add(f.getName().split("\\.")[0]);
+			success.add(f.getName().split("\\.")[0]);
+		}
+		
+		for(int i = 0; i < NodeServer.DOWNLOAD_THREADS; i++){
+			new Thread(new DonloadWorker(),"downloadWorker-"+i).start();
 		}
 	}
 
@@ -71,27 +74,27 @@ public class Downloader implements Runnable{
 	public void run() {
 		while(true){
 			try{
-				Thread.sleep(2000);
-				long start = System.currentTimeMillis();
-				for(String infoHash : ClientHandler.infohashes){
-					if(!hashes.contains(infoHash) && !checkOverdue(infoHash)){
-						if(downFromXL(infoHash)
-								|| downFromVuze(infoHash)
-								|| downFromTorCache(infoHash)
-								){
-							hashes.add(infoHash);
-							Utils.printTorrents(infoHash);
-						}else{
-							add(infoHash);
-						}
-					}
-				}
-				
-				log.info("down loop:  totalSize="+ClientHandler.infohashes.size() +"   getSize="+hashes.size()+"   cost:" + (System.currentTimeMillis() - start));
-				
+				Thread.sleep(10000);
+				log.info("down load:  todoSize="+todos.size() +"   successSize="+success.size()+"   failureSize:" +failures.size());
 			}catch(Exception e){
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	public static void download(String infoHash){
+		if(success.contains(infoHash) || failures.contains(infoHash)){
+			return;
+		}
+		
+		if(downFromXL(infoHash)
+				|| downFromVuze(infoHash)
+				|| downFromTorCache(infoHash)
+				){
+			success.add(infoHash);
+			Utils.printTorrents(infoHash);
+		}else{
+			failures.add(infoHash);
 		}
 	}
 	

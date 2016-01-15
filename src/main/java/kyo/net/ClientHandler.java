@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import kyo.Downloader;
 import kyo.GetPeerWorker;
 import kyo.Node;
 import kyo.NodeServer;
@@ -222,7 +223,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        				NodeServer.addWorker(w);
 	        			}
 	        			infohashes.add(ih);
-	        			
+	        			Downloader.addInfoHash(ih);
 	        			Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
 	        		}else if(q.equals("announce_peer")){
 	        			//announce_peer

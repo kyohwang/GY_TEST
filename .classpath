@@ -12,10 +12,25 @@
   <classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.6/commons-lang-2.6.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/simpleframework/simple/4.1.21/simple-4.1.21.jar"/>
   <classpathentry kind="var" path="M2_REPO/io/netty/netty-all/4.0.19.Final/netty-all-4.0.19.Final.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/solr/solr-solrj/5.4.0/solr-solrj-5.4.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/httpcomponents/httpmime/4.4.1/httpmime-4.4.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/zookeeper/zookeeper/3.4.6/zookeeper-3.4.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/stax2-api/3.1.4/stax2-api-3.1.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/woodstox-core-asl/4.4.1/woodstox-core-asl-4.4.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/noggit/noggit/0.6/noggit-0.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/jcl-over-slf4j/1.7.7/jcl-over-slf4j-1.7.7.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/net/sf/json-lib/json-lib/2.4/json-lib-2.4-jdk15.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-beanutils/commons-beanutils/1.8.0/commons-beanutils-1.8.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar" sourcepath="M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1-sources.jar">
+    <attributes>
+      <attribute value="jar:file:/C:/Users/lenovo/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1-javadoc.jar!/" name="javadoc_location"/>
+    </attributes>
+  </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/net/sf/ezmorph/ezmorph/1.0.6/ezmorph-1.0.6.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/xmlbeans/xmlbeans/2.4.0/xmlbeans-2.4.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/stax/stax-api/1.0.1/stax-api-1.0.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-log4j12/1.6.4/slf4j-log4j12-1.6.4.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.16/log4j-1.2.16.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/testng/testng/6.1.1/testng-6.1.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>

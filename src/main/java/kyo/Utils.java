@@ -3,22 +3,21 @@ package kyo;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import kyo.net.NettyService;
 import kyo.net.UdpSender;
+import net.sf.json.JSONObject;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.common.SolrInputDocument;
 import org.apache.xmlbeans.impl.util.HexBin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +88,16 @@ public class Utils {
 //			}
 //			
 //			test();
+		
+		try{
+			File file = new File("files/" +"03621694F0E8B2CE87216C99CB5CA3AF23029E37.torrent");
+			HttpSolrServer ss = new HttpSolrServer("http://vpn.shangua.com:8983/solr/gettingstarted");
+			
+			Utils.indexSolr(ss, file);
+					
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -118,6 +127,44 @@ public class Utils {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+	}
+	
+	public static String jsonTorrents(File file){
+		Torrent t;
+		try {
+			Map<String,Object> map = new HashMap<String, Object>();
+			t = Torrent.load(file);
+			map.put("hash", HexBin.bytesToString(t.getInfoHash()));
+			map.put("size", t.getSize());
+			map.put("comment", t.getComment());
+			map.put("name", t.getName());
+			map.put("files", t.getFilenames());
+		
+			return JSONObject.fromObject(map).toString();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	public static void indexSolr(HttpSolrServer  solr,File file){
+		  if(solr == null || file == null) return;
+		  
+		  try {
+			  SolrInputDocument doc = new SolrInputDocument();
+				Torrent t = Torrent.load(file);
+				doc.addField("hash", HexBin.bytesToString(t.getInfoHash()));
+				doc.addField("size", t.getSize());
+				doc.addField("comment", t.getComment());
+				doc.addField("name", t.getName());
+				doc.addField("files", t.getFilenames());
+				solr.add(doc);
+				solr.commit();
+				solr.optimize();
+		  }catch(Exception e){
+			  e.printStackTrace();
+		  }
 	}
 	
 	public static void printTorrents(File file){

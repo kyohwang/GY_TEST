@@ -20,6 +20,7 @@ public class NodeServer {
 	private static byte[]  LOCAL_ID;
 	public static String LOCAL_IP = "123.114.110.200";
 	public static int LOCAL_PORT = 6881;
+	public static int DOWNLOAD_THREADS = 10;
 	private static Bucket bucket;
 	/**
 	 * 可能已经掉线的node，测试，再不返回就干掉
@@ -55,6 +56,7 @@ public class NodeServer {
         	LOCAL_IP = config.getString("ip");
         	LOCAL_PORT = config.getInt("port");
         	LOCAL_ID = config.getString("clientid").getBytes("utf-8");
+        	DOWNLOAD_THREADS = config.getInt("downThreads");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
