@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,8 +16,11 @@ import kyo.net.UdpSender;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.xmlbeans.impl.util.HexBin;
 import org.slf4j.Logger;
@@ -89,15 +93,17 @@ public class Utils {
 //			
 //			test();
 		
-		try{
-			File file = new File("files/" +"03621694F0E8B2CE87216C99CB5CA3AF23029E37.torrent");
-			HttpSolrServer ss = new HttpSolrServer("http://vpn.shangua.com:8983/solr/gettingstarted");
+	/*	try{
+			File file = new File("files/" +"33EE6E6AE87F24E3E9A0AA308C57CB289A927A04.torrent");
+			HttpSolrClient ss = new HttpSolrClient("http://vpn.shangua.com:8984/solr/tor");
 			
 			Utils.indexSolr(ss, file);
 					
 		}catch(Exception e){
 			e.printStackTrace();
-		}
+		}*/
+		
+		analyse();
 	}
 	
 	/**
@@ -148,7 +154,7 @@ public class Utils {
 		return null;
 	}
 	
-	public static void indexSolr(HttpSolrServer  solr,File file){
+	public static void indexSolr(HttpSolrClient  solr,File file) throws Exception{
 		  if(solr == null || file == null) return;
 		  
 		  try {
@@ -161,9 +167,10 @@ public class Utils {
 				doc.addField("files", t.getFilenames());
 				solr.add(doc);
 				solr.commit();
-				solr.optimize();
+//				solr.optimize();
 		  }catch(Exception e){
 			  e.printStackTrace();
+			  throw e;
 		  }
 	}
 	
@@ -364,6 +371,42 @@ public class Utils {
 	
 	public static void shutdown(){
 		sender.shutdown();
+	}
+	
+	public static void analyse(){
+		try {
+			             // 要处理的文本
+//			             String text = "lucene分析器使用分词器和过滤器构成一个“管道”，文本在流经这个管道后成为可以进入索引的最小单位，因此，一个标准的分析器有两个部分组成，一个是分词器tokenizer,它用于将文本按照规则切分为一个个可以进入索引的最小单位。另外一个是TokenFilter，它主要作用是对切出来的词进行进一步的处理（如去掉敏感词、英文大小写转换、单复数处理）等。lucene中的Tokenstram方法首先创建一个tokenizer对象处理Reader对象中的流式文本，然后利用TokenFilter对输出流进行过滤处理";
+			             String text = "芈月传";
+			             // 自定义停用词
+			             String[] self_stop_words = { "的", "在","了", "呢", "，", "0", "：", ",", "是", "流" };
+			             CharArraySet cas = new CharArraySet(0, true);
+			             for (int i = 0; i < self_stop_words.length; i++) {
+			                 cas.add(self_stop_words[i]);
+			             }
+			 
+			             // 加入系统默认停用词
+			             Iterator<Object> itor = SmartChineseAnalyzer.getDefaultStopSet().iterator();
+			             while (itor.hasNext()) {
+			                 cas.add(itor.next());
+			             }
+			             
+			 
+			             // 中英文混合分词器(其他几个分词器对中文的分析都不行)
+			             SmartChineseAnalyzer sca = new SmartChineseAnalyzer( cas);
+			 
+			             TokenStream ts = sca.tokenStream("field", text);
+			             CharTermAttribute ch = ts.addAttribute(CharTermAttribute.class);
+			 
+			             ts.reset();
+			             while (ts.incrementToken()) {
+			                 System.out.println(ch.toString());
+			             }
+			             ts.end();
+			             ts.close();
+			         } catch (Exception ex) {
+			             ex.printStackTrace();
+			         }
 	}
 	
 	

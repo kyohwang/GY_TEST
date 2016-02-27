@@ -67,7 +67,7 @@ public abstract class Worker {
 			System.out.println(HexBin.bytesToString(n.getId()));
 		}*/
 
-		System.out.println("Add. Left:" + list.size());
+//		System.out.println("Add. Left:" + list.size());
 		
 	}
 	
@@ -78,7 +78,7 @@ public abstract class Worker {
 //		Collections.sort(list, comp);
 		Node node = list.get(0);
 		list.remove(0);
-		System.out.println("Remove. Left:" + list.size());
+//		System.out.println("Remove. Left:" + list.size());
 		
 		return node;
 	}

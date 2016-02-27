@@ -19,6 +19,7 @@ public class NodeServer {
 	/**±¾»úID*/
 	private static byte[]  LOCAL_ID;
 	public static String LOCAL_IP = "123.114.110.200";
+	public static String INDEX_URL = "http://vpn.shangua.com:8984/solr/tor";
 	public static int LOCAL_PORT = 6881;
 	public static int DOWNLOAD_THREADS = 10;
 	private static Bucket bucket;
@@ -57,6 +58,7 @@ public class NodeServer {
         	LOCAL_PORT = config.getInt("port");
         	LOCAL_ID = config.getString("clientid").getBytes("utf-8");
         	DOWNLOAD_THREADS = config.getInt("downThreads");
+        	INDEX_URL =  config.getString("indexUrl");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -130,6 +132,9 @@ public class NodeServer {
 		Downloader down = new Downloader();
 		down.init();
 		new Thread(down,"downloader").start();
+		Indexer index = new Indexer();
+		index.init();
+		new Thread(index,"indexer").start();
 		
 		while(true){
 			Thread.sleep(600);

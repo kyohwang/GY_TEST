@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicLong;
 
 import kyo.net.ClientHandler;
 
@@ -25,13 +26,17 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 public class Downloader implements Runnable{
 	private static Logger  log = Logger.getLogger("world");
-	private static CopyOnWriteArraySet<String> success = new CopyOnWriteArraySet<String>();
-	private static CopyOnWriteArraySet<String> failures = new CopyOnWriteArraySet<String>();
-	private static ConcurrentLinkedQueue<String> todos = new ConcurrentLinkedQueue<String>();
+	public static CopyOnWriteArraySet<String> success = new CopyOnWriteArraySet<String>();
+	public static CopyOnWriteArraySet<String> failures = new CopyOnWriteArraySet<String>();
+	public static ConcurrentLinkedQueue<String> todos = new ConcurrentLinkedQueue<String>();
 	
 	static final String XunLei = "http://bt.box.n0808.com/{0}/{1}/{2}.torrent";
 	static final String Vuze = "http://magnet.vuze.com/magnetLookup?hash={0}";
 	static final String TorCache = "http://torcache.net/torrent/{0}.torrent";
+	
+	static AtomicLong xCount = new AtomicLong(0);
+	static AtomicLong vCount = new AtomicLong(0);
+	static AtomicLong tCount = new AtomicLong(0);
 	
 	
 	public static void addInfoHash(String hash){
@@ -76,8 +81,9 @@ public class Downloader implements Runnable{
 			try{
 				Thread.sleep(10000);
 				log.info("down load:  todoSize="+todos.size() +"   successSize="+success.size()+"   failureSize:" +failures.size());
+				log.info("down load:  Xunlei="+xCount +"   Vuze="+vCount+"   torCache:" +tCount);
 			}catch(Exception e){
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 	}
@@ -93,6 +99,7 @@ public class Downloader implements Runnable{
 				){
 			success.add(infoHash);
 			Utils.printTorrents(infoHash);
+			Indexer.todos.add(infoHash);
 		}else{
 			failures.add(infoHash);
 		}
@@ -122,7 +129,8 @@ public class Downloader implements Runnable{
 		     return true;  
 	
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			xCount.incrementAndGet();
 		}
 		
 		return false;
@@ -150,7 +158,8 @@ public class Downloader implements Runnable{
 		     return true;  
 	
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			vCount.incrementAndGet();
 		}
 		
 		return false;
@@ -181,7 +190,8 @@ public class Downloader implements Runnable{
 		     return true;  
 	
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			tCount.incrementAndGet();
 		}
 		
 		return false;
