@@ -79,7 +79,7 @@ public class Indexer implements Runnable {
 		long logMark = -1;
 		while(true){
 			try{
-				Thread.sleep(1);
+				Thread.sleep(10);
 				String infoHash = todos.poll();
 				if(infoHash != null){
 					if(!index(infoHash)){

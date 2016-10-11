@@ -23,6 +23,7 @@ import kyo.NodeServer;
 import kyo.Peer;
 import kyo.Utils;
 import kyo.Worker;
+import kyo.utils.Counter;
 
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.impl.util.HexBin;
@@ -217,6 +218,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        			byte[] infoHash = a.get("info_hash").getBytes();
 	        			
 	        			String ih = HexBin.bytesToString(infoHash);
+	        			Counter.addHash(ih);
 	        			infohash.info("magnet:?xt=urn:btih:" + ih);
 	        			if(!hashes.contains(ih)){
 	        				Worker w = new GetPeerWorker(Utils.getNextTaskId(), infoHash, NodeServer.getBucket().getNodes(infoHash));

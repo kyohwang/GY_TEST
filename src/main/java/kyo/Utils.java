@@ -198,7 +198,7 @@ public class Utils {
 	/**
 	 *  ping 指定Node
 	 * @param selfId
-	 * @param Node
+	 * @param CNode
 	 */
 	public static void ping(byte[] selfId, Node node){
 		ping(selfId, node.getIp(),node.getPort());
@@ -304,7 +304,7 @@ public class Utils {
 	 * @param selfID  本节点ID
 	 * @param targetID   目标节点ID
 	 * @param taskId  事件序列号
-	 * @param Node 询问对象
+	 * @param CNode 询问对象
 	 */
 	public static void findNode(byte[] targetID, String taskId, Node node){
 		 findNode(NodeServer.getLOCAL_ID(),targetID,taskId,node.getIp(),node.getPort());

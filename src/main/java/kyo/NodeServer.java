@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import kyo.utils.Counter;
+
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -125,6 +127,8 @@ public class NodeServer {
 	public static void main(String[] args) throws Exception{
 
 		NodeServer.init();
+		//≈≈––∞Ò∆Ù∂Ø
+		new Thread(new Counter(), "counter").start();
 		
 		Utils.startup();
 		new Thread(new NodeChecker(bucket),"nodeChecker").start();
@@ -135,6 +139,7 @@ public class NodeServer {
 		Indexer index = new Indexer();
 		index.init();
 		new Thread(index,"indexer").start();
+		
 		
 		while(true){
 			Thread.sleep(600);
