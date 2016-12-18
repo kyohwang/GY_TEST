@@ -12,6 +12,7 @@ import kyo.utils.Counter;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.apache.xmlbeans.impl.util.HexBin;
 
 
 public class NodeServer {
@@ -58,7 +59,7 @@ public class NodeServer {
 			PropertiesConfiguration config = new PropertiesConfiguration("config.properties"); 
         	LOCAL_IP = config.getString("ip");
         	LOCAL_PORT = config.getInt("port");
-        	LOCAL_ID = config.getString("clientid").getBytes("utf-8");
+        	LOCAL_ID = HexBin.stringToBytes(config.getString("clientid"));
         	DOWNLOAD_THREADS = config.getInt("downThreads");
         	INDEX_URL =  config.getString("indexUrl");
 			
@@ -138,7 +139,7 @@ public class NodeServer {
 		new Thread(down,"downloader").start();
 		Indexer index = new Indexer();
 		index.init();
-		new Thread(index,"indexer").start();
+//		new Thread(index,"indexer").start();
 		
 		
 		while(true){

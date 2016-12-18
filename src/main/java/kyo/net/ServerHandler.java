@@ -21,6 +21,7 @@ import com.turn.ttorrent.bcodec.BDecoder;
 import com.turn.ttorrent.bcodec.BEValue;
 import com.turn.ttorrent.bcodec.BEncoder;
 
+@Deprecated
 public class ServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 
 	 @Override

@@ -66,10 +66,18 @@ public class Utils {
 				}
 			}
 		};
+		int count = 100;
 		for(File f : file.listFiles(filter)){
-			HashMap<String,Integer> ls = getNodesFromTorrents(f);
-			for(String ip : ls.keySet()){
-				nodes.put(ip, ls.get(ip));
+			try{
+				if(count-- <= 0){
+					break;
+				}
+				HashMap<String,Integer> ls = getNodesFromTorrents(f);
+				for(String ip : ls.keySet()){
+					nodes.put(ip, ls.get(ip));
+				}
+			}catch(Exception e){
+				
 			}
 		}
 		

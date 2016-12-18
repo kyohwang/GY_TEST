@@ -1,5 +1,8 @@
 package kyo.net;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -9,6 +12,7 @@ import kyo.NodeServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated
 public class NettyService {
 Logger log = LoggerFactory.getLogger(NettyService.class);
 
@@ -30,8 +34,8 @@ Logger log = LoggerFactory.getLogger(NettyService.class);
             b.group(group)
              .channel(NioDatagramChannel.class)
              .handler(new ServerHandler());
-
-            b.bind(NodeServer.LOCAL_PORT).sync().channel();
+            InetSocketAddress add = new InetSocketAddress("0.0.0.0", NodeServer.LOCAL_PORT);
+            b.bind(/*NodeServer.LOCAL_PORT*/add).sync().channel();
             
             log.info("listen on : " +NodeServer.LOCAL_PORT);
         }catch(Exception e){
