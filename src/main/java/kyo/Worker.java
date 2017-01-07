@@ -13,6 +13,8 @@ public abstract class Worker {
 	protected int maxTimes = 100;
 	protected String taskId;
 	protected long startTime;
+
+	int ownerPort;
 	
 	Comparator<Node> comp = new Comparator<Node>(){
 
@@ -38,10 +40,11 @@ public abstract class Worker {
 		
 	};
 	
-	public Worker(String taskId, byte[]  targetId, List<Node> list){
+	public Worker(String taskId, byte[]  targetId, List<Node> list, int ownerPort){
 		this.targetId = targetId;
 		this.list.addAll(list);
 		this.taskId = taskId;
+		this.ownerPort = ownerPort;
 		this.startTime = System.currentTimeMillis();
 	}
 	

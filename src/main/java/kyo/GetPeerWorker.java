@@ -4,8 +4,8 @@ import java.util.List;
 
 public class GetPeerWorker extends Worker {
 
-	public GetPeerWorker(String taskId, byte[] targetId, List<Node> list) {
-		super(taskId, targetId, list);
+	public GetPeerWorker(String taskId, byte[] targetId, List<Node> list,int ownerPort) {
+		super(taskId, targetId, list, ownerPort);
 	}
 
 	@Override
@@ -13,7 +13,7 @@ public class GetPeerWorker extends Worker {
 		if(this.tryedTimes < this.maxTimes){
 			Node node = this.getTop();
 			if(node != null){
-				Utils.get_peer(this.targetId, taskId, node);
+				Utils.get_peer(this.targetId, taskId, node,this.ownerPort);
 			}
 		}else{
 			//³¬´ÎÊý£¬¸Éµô

@@ -38,6 +38,15 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	private static Logger  infohash = Logger.getLogger("infohash");
 	private static Logger  hash = Logger.getLogger("hash");
 	
+	/**
+	 * upd¼àÌý¶Ë¿Ú
+	 */
+	int ownerPort;
+	
+	public ClientHandler(int port){
+		this.ownerPort = port;
+	}
+	
 	
 	public static CopyOnWriteArrayList<String> hashes = new CopyOnWriteArrayList<String>();
 	public static CopyOnWriteArraySet<String> infohashes = new CopyOnWriteArraySet<String>();
@@ -46,9 +55,9 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 		try {
 			BEValue id = r.get("id");
 			Node node = new Node(id.getBytes(),packet.sender().getAddress().getHostAddress(),
-					packet.sender().getPort());
-			NodeServer.addNode(node);
-			log.info("PING BACK: " + node.getIp() + " " + node.getPort());
+					packet.sender().getPort(),this.ownerPort);
+			NodeServer.addNode(ownerPort,node);
+			log.info("PING BACK: " + node.getIp() + " " + node.getPort() +" ,owner" + this.ownerPort);
 		} catch (InvalidBEncodingException e) {
 			e.printStackTrace();
 		}
@@ -69,10 +78,10 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 			sb.append(in.read());
 			String ip = sb.toString();
 			int port = (in.read() << 8)+ in.read();
-			Node node = new Node(nodeId,ip,port);
+			Node node = new Node(nodeId,ip,port,this.ownerPort);
 			
 //			NodeServer.addNode(node);
-			Utils.ping(NodeServer.getLOCAL_ID(), node);
+			Utils.ping(NodeServer.getLOCAL_ID(this.ownerPort), node,this.ownerPort);
 			NodeServer.checkFinishFindNode(t.split("_")[1], node);
 		}
 	}
@@ -120,7 +129,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 				sb.append(in.read());
 				String ip = sb.toString();
 				int port = (in.read() << 8)+ in.read();
-				Node node = new Node(nodeId, ip, port);
+				Node node = new Node(nodeId, ip, port,this.ownerPort);
 				worker.add(node);
 			}
 			worker.goOn();
@@ -130,9 +139,9 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	private void pingRequest(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception{
 		log.info("PING: " + packet.sender().getAddress() + " " + packet.sender().getPort());
 		Map<String,BEValue> ping = new HashMap<String,BEValue>();
-		ping.put("id", new BEValue(NodeServer.getLOCAL_ID()));
+		ping.put("id", new BEValue(NodeServer.getLOCAL_ID(this.ownerPort)));
 		this.send(ctx, packet.sender(), new BEValue(ping));
-		Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
+		Utils.ping(NodeServer.getLOCAL_ID(this.ownerPort), packet.sender().getAddress().getHostAddress(), packet.sender().getPort(),this.ownerPort);
 	}
 	
 	private void findNodeRequest(ChannelHandlerContext ctx, DatagramPacket packet, Map<String, BEValue> p, String t) throws Exception{
@@ -142,10 +151,10 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 		byte[] id = a.get("id").getBytes();
 		byte[] target = a.get("target").getBytes();
 		List<Node> nodes = new ArrayList<Node>();
-		if(Node.match(NodeServer.getLOCAL_ID(), target)){
-			nodes.add(new Node(NodeServer.getLOCAL_ID(),NodeServer.LOCAL_IP,NodeServer.LOCAL_PORT));
+		if(Node.match(NodeServer.getLOCAL_ID(this.ownerPort), target)){
+			nodes.add(new Node(NodeServer.getLOCAL_ID(this.ownerPort),NodeServer.LOCAL_IP,this.ownerPort,this.ownerPort));
 		}else{
-			nodes.addAll(NodeServer.getBucket().getNodes(4,target));
+			nodes.addAll(NodeServer.getBucket(this.ownerPort).getNodes(4,target));
 		}
 		
 		Map<String,BEValue> rst = new HashMap<String,BEValue>();
@@ -167,11 +176,11 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 			out.write(p2);
 		}
 		r.put("nodes", new BEValue(out.toByteArray()));
-		r.put("id", new BEValue(NodeServer.getLOCAL_ID()));
+		r.put("id", new BEValue(NodeServer.getLOCAL_ID(this.ownerPort)));
 		rst.put("r", new BEValue(r));
 		this.send(ctx, packet.sender(), new BEValue(rst));
 		
-		Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
+		Utils.ping(NodeServer.getLOCAL_ID(this.ownerPort), packet.sender().getAddress().getHostAddress(), packet.sender().getPort(),this.ownerPort);
 	}
 
 	 @Override
@@ -212,21 +221,21 @@ public class ClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 	        			this.findNodeRequest(ctx, packet, p, t);
 	        		}else if(q.equals("get_peers")){
 	        			//get_peers
-	        			log.info("GP: " + packet.sender().getAddress() + " " + packet.sender().getPort());
+	        			log.info("GP: " + packet.sender().getAddress() + " " + packet.sender().getPort() +" owner:" + this.ownerPort);
 	        			Map<String, BEValue> a = p.get("a").getMap();
 	        			byte[] id = a.get("id").getBytes();
 	        			byte[] infoHash = a.get("info_hash").getBytes();
 	        			
 	        			String ih = HexBin.bytesToString(infoHash);
 	        			Counter.addHash(ih);
-	        			infohash.info("magnet:?xt=urn:btih:" + ih);
+	        			infohash.info("magnet:?xt=urn:btih:" + ih + " ,owner:"+this.ownerPort);
 	        			if(!hashes.contains(ih)){
-	        				Worker w = new GetPeerWorker(Utils.getNextTaskId(), infoHash, NodeServer.getBucket().getNodes(infoHash));
+	        				Worker w = new GetPeerWorker(Utils.getNextTaskId(), infoHash, NodeServer.getBucket(this.ownerPort).getNodes(infoHash),this.ownerPort);
 	        				NodeServer.addWorker(w);
 	        			}
 	        			infohashes.add(ih);
 	        			Downloader.addInfoHash(ih);
-	        			Utils.ping(NodeServer.getLOCAL_ID(), packet.sender().getAddress().getHostAddress(), packet.sender().getPort());
+	        			Utils.ping(NodeServer.getLOCAL_ID(this.ownerPort), packet.sender().getAddress().getHostAddress(), packet.sender().getPort(),this.ownerPort);
 	        		}else if(q.equals("announce_peer")){
 	        			//announce_peer
 	        			log.info("ANNOUNCE: " + packet.sender().getAddress() + " " + packet.sender().getPort());

@@ -1,35 +1,31 @@
 package kyo;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
+import kyo.net.UdpSender;
 import kyo.utils.Counter;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.apache.xmlbeans.impl.util.HexBin;
 
 
 public class NodeServer {
 	
 	private static Logger  log = Logger.getLogger(NodeServer.class);
-	
-	/**本机ID*/
-	private static byte[]  LOCAL_ID;
 	public static String LOCAL_IP = "123.114.110.200";
 	public static String INDEX_URL = "http://vpn.shangua.com:8984/solr/tor";
-	public static int LOCAL_PORT = 6881;
 	public static int DOWNLOAD_THREADS = 10;
-	private static Bucket bucket;
-	/**
-	 * 可能已经掉线的node，测试，再不返回就干掉
-	 */
-	private static List<Node> pingList ;
+	static Map<Integer,UdpSender> updSenders = new HashMap<Integer,UdpSender>();
 	
 	/**
 	 *  任务列表
@@ -40,29 +36,29 @@ public class NodeServer {
 	public static Set<String> blackList = new HashSet<String>();
 	
 	
-	public static byte[] getLOCAL_ID(){
-		
-		
-		return LOCAL_ID;
-	}
-	
 	private static void init(){
 		try {
 			String dir = System.getProperty("user.dir");
 			PropertyConfigurator.configure(dir+"/log4j.properties");
-			
-			LOCAL_ID = "niubi098765432345787".getBytes("utf-8");
-			bucket = new Bucket(LOCAL_ID);
-			pingList = new CopyOnWriteArrayList<Node>();
+			System.setProperty("javax.net.ssl.trustStore", dir+"/jssecacerts");
 			works = new ConcurrentHashMap<String, Worker>();
-			
 			PropertiesConfiguration config = new PropertiesConfiguration("config.properties"); 
         	LOCAL_IP = config.getString("ip");
-        	LOCAL_PORT = config.getInt("port");
-        	LOCAL_ID = HexBin.stringToBytes(config.getString("clientid"));
         	DOWNLOAD_THREADS = config.getInt("downThreads");
         	INDEX_URL =  config.getString("indexUrl");
-			
+        	
+        	File nodes = new File("nodes.properties");
+        	FileReader reader = new FileReader(nodes);
+        	BufferedReader bf = new BufferedReader(reader);
+        	String line = null;
+        	while((line = bf.readLine()) != null){
+        		String[] ls = line.split(",");
+        		UdpSender udp  = new UdpSender(ls[1], ls[0]);
+        		updSenders.put(udp.LOCAL_PORT, udp);
+        	}
+        	
+        	bf.close();
+        	reader.close();			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -73,9 +69,12 @@ public class NodeServer {
 	 * @param node
 	 *  添加节点到森林
 	 */
-	public static void addNode(Node node){
-		log.info(",addNode"+node.log());
-		bucket.addNode(node);
+	public static void addNode(int nodePort,Node node){
+		log.info(nodePort + ": addNode"+node.log());
+		UdpSender n = updSenders.get(nodePort);
+		if(n != null){
+			n.bucket.addNode(node);
+		}
 	}
 	
 	/**
@@ -121,8 +120,8 @@ public class NodeServer {
 		}
 	}
 	
-	public static Bucket getBucket() {
-		return bucket;
+	public static Bucket getBucket(int nodePort) {
+		return updSenders.get(nodePort).bucket;
 	}
 
 	public static void main(String[] args) throws Exception{
@@ -130,10 +129,8 @@ public class NodeServer {
 		NodeServer.init();
 		//排行榜启动
 		new Thread(new Counter(), "counter").start();
-		
-		Utils.startup();
-		new Thread(new NodeChecker(bucket),"nodeChecker").start();
-		new Thread(new NodeFinder(bucket),"nodeFinder").start();
+		new Thread(new NodeChecker(),"nodeChecker").start();
+		new Thread(new NodeFinder(),"nodeFinder").start();
 		Downloader down = new Downloader();
 		down.init();
 		new Thread(down,"downloader").start();
@@ -156,13 +153,20 @@ public class NodeServer {
 		}
 	}
 	
-	public static void startFromFiles(){
-		HashMap<String,Integer> nodes = Utils.getNodesFromTorrentFiles("data");
-		for(String ip : nodes.keySet()){
-			int port = nodes.get(ip);
-			Utils.ping(LOCAL_ID, ip, port);
+	public static void startFromFiles(int nodePort){
+		HashMap<String,Integer> ns = Utils.getNodesFromTorrentFiles("data");
+		for(String ip : ns.keySet()){
+			int port = ns.get(ip);
+			UdpSender udp = updSenders.get(nodePort);
+			if(udp != null){
+				Utils.ping(udp.LOCAL_ID, ip, port,nodePort);
+			}
 			log.info("Load File:" +ip + " " + port);
 		}
+	}
+	
+	public static byte[] getLOCAL_ID(int port){
+		return updSenders.get(port).LOCAL_ID;
 	}
 
 }

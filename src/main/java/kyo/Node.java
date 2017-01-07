@@ -17,6 +17,11 @@ public class Node {
 		 */
 		private int port;
 		
+		/**
+		 * 所属虚拟节点端口
+		 */
+		private int ownerPort;
+		
 		private long lastActive = System.currentTimeMillis();
 		private int triedTimes = 0;
 				
@@ -38,13 +43,13 @@ public class Node {
 		public void setPort(int port) {
 			this.port = port;
 		}
-		public Node() {
-		}
-		public Node(byte[] id, String ip, int port) {
+
+		public Node(byte[] id, String ip, int port, int ownerPort) {
 			super();
 			this.id = id;
 			this.ip = ip;
 			this.port = port;
+			this.ownerPort = ownerPort;
 		}
 		/**ID必须完全一致
 		 * @see java.lang.Object#equals(java.lang.Object)
@@ -98,7 +103,7 @@ public class Node {
 		 */
 		public boolean isOverdue(){
 			if(System.currentTimeMillis() - this.lastActive > 1*60*1000){
-				 Utils.ping(NodeServer.getLOCAL_ID(), this);
+				 Utils.ping(NodeServer.getLOCAL_ID(this.ownerPort), this, this.ownerPort);
 				 this.triedTimes++;
 				 this.lastActive = System.currentTimeMillis();
 			}

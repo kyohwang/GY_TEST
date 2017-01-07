@@ -2,37 +2,41 @@ package kyo;
 
 import java.util.List;
 
+import kyo.net.UdpSender;
+
 import org.apache.log4j.Logger;
 
 public class NodeChecker implements Runnable {
+	
 	private static Logger  log = Logger.getLogger(NodeChecker.class);
-	
-	private Bucket bucket;
-	
-	public NodeChecker(Bucket bucket){
-		this.bucket = bucket;
-	}
 	
 	@Override
 	public void run() {
 		
 		while(true){
-			try{
-				if(this.bucket.getNodeSize() == 0){
-					NodeServer.startFromFiles();
-					
-				}
+			try {
 				Thread.sleep(1*60*1000);
-				log.info("Node size : " + this.bucket.getNodeSize());
-				 for(List<Node> list : bucket.getTree().values()){
-					 for(Node node : list){
-						 if(node.isOverdue()){
-							 bucket.removeNode(node);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			for(UdpSender udp : NodeServer.updSenders.values()){
+				try{
+					if(udp.bucket.getNodeSize() == 0){
+						NodeServer.startFromFiles(udp.LOCAL_PORT);
+						
+					}
+					log.info("Node size : " + udp.bucket.getNodeSize());
+					 for(List<Node> list : udp.bucket.getTree().values()){
+						 for(Node node : list){
+							 if(node.isOverdue()){
+								 udp.bucket.removeNode(node);
+							 }
 						 }
 					 }
-				 }
-			}catch(Exception e){
-				e.printStackTrace();
+					 
+				}catch(Exception e){
+					e.printStackTrace();
+				}
 			}
 		}
 	}

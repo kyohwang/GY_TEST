@@ -12,17 +12,30 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.io.ByteArrayOutputStream;
 import java.net.InetSocketAddress;
 
+import org.apache.xmlbeans.impl.util.HexBin;
+
+import kyo.Bucket;
 import kyo.NodeServer;
 
 import com.turn.ttorrent.bcodec.BEValue;
 import com.turn.ttorrent.bcodec.BEncoder;
 
 public class UdpSender {
+
+	public byte[]  LOCAL_ID;
+	public int LOCAL_PORT;
+	public Bucket bucket;
+	
 	 EventLoopGroup group = new NioEventLoopGroup();
 	 Channel ch = null;
+
 	 
-	 public UdpSender(){
+	 public UdpSender(String id, String port){
 		try {
+			this.LOCAL_ID = HexBin.stringToBytes(id);
+			this.LOCAL_PORT = Integer.parseInt(port);
+			this.bucket = new Bucket(LOCAL_ID);
+			
 	        Bootstrap b = new Bootstrap();
 	        b.group(group)
 	         .channel(NioDatagramChannel.class)
@@ -30,8 +43,8 @@ public class UdpSender {
 	         .option(ChannelOption.SO_REUSEADDR, true)
 	         .option(ChannelOption.SO_RCVBUF, 1024*1024*100)
 	         .option(ChannelOption.SO_SNDBUF, 1024*1024*100)
-	         .handler(new ClientHandler());
-	        ch = b.bind(NodeServer.LOCAL_PORT).sync().channel();
+	         .handler(new ClientHandler(LOCAL_PORT));
+	        ch = b.bind(LOCAL_PORT).sync().channel();
 	    } catch(Exception e) {
 	        e.printStackTrace();
 	    }
@@ -70,8 +83,8 @@ public void send(InetSocketAddress add, BEValue value) throws Exception{
 			         .option(ChannelOption.TCP_NODELAY, true)
 			         .option(ChannelOption.SO_RCVBUF, 1024*1024*100)
 			         .option(ChannelOption.SO_SNDBUF, 1024*1024*100)
-			         .handler(new ClientHandler());
-			        ch = b.bind(NodeServer.LOCAL_PORT).sync().channel();
+			         .handler(new ClientHandler(this.LOCAL_PORT));
+			        ch = b.bind(LOCAL_PORT).sync().channel();
 			    } catch(Exception e) {
 			        e.printStackTrace();
 			    }
@@ -96,6 +109,18 @@ public void send(InetSocketAddress add, BEValue value) throws Exception{
 	}catch(Exception e){
 		e.printStackTrace();
 	}
+	
 }
+
+	 public static void main(String[] args){
+		 byte[] bytes = HexBin.stringToBytes("327254EA20EF4C7C0CC2C2649FB3610A5E076952");
+		 for(int i = 0; i < 256; i++){
+			 bytes[0] = (byte) i;
+			 for(int r = 1; r < bytes.length; r++){
+				 bytes[r] = (byte) (Math.random()*256);
+			 }
+			 System.out.println(6000+i +","+HexBin.bytesToString(bytes));
+		 }
+	 }
 
 }

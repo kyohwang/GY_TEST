@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import kyo.net.NettyService;
 import kyo.net.UdpSender;
 import net.sf.json.JSONObject;
 
@@ -29,10 +28,9 @@ import org.slf4j.LoggerFactory;
 import com.turn.ttorrent.bcodec.BEValue;
 
 public class Utils {
-	static Logger log = LoggerFactory.getLogger(NettyService.class);
+	static Logger log = LoggerFactory.getLogger(Utils.class);
 	static Logger tor = LoggerFactory.getLogger("torrent");
 	
-	private static UdpSender sender;
 	private static AtomicInteger taskId = new AtomicInteger();
 
 	/***/
@@ -134,12 +132,12 @@ public class Utils {
 		}
 	}
 	
-	public static void printTorrents(String infoHash){
+	public static void printTorrents(String infoHash) throws IOException{
 		try{
 			File file = new File("files/" +infoHash+".torrent");
 			printTorrents(file);
-		}catch(Exception e){
-			e.printStackTrace();
+		}catch(IOException e){
+			throw e;
 		}
 	}
 	
@@ -182,7 +180,7 @@ public class Utils {
 		  }
 	}
 	
-	public static void printTorrents(File file){
+	public static void printTorrents(File file) throws IOException{
 		Torrent t;
 		try {
 			t = Torrent.load(file);
@@ -199,7 +197,7 @@ public class Utils {
 			
 			tor.info("Torrent: " + sb.toString());
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}
 	
@@ -208,8 +206,8 @@ public class Utils {
 	 * @param selfId
 	 * @param CNode
 	 */
-	public static void ping(byte[] selfId, Node node){
-		ping(selfId, node.getIp(),node.getPort());
+	public static void ping(byte[] selfId, Node node, int ownerPort){
+		ping(selfId, node.getIp(),node.getPort(), ownerPort);
 	}
 	
 	/**
@@ -218,7 +216,7 @@ public class Utils {
 	 * @param ip
 	 * @param port
 	 */
-	public static void ping(byte[] selfId, String ip, int port){
+	public static void ping(byte[] selfId, String ip, int port, int ownerPort){
 		try {
 			Map<String,BEValue> ping = new HashMap<String,BEValue>();
 			ping.put("t", new BEValue("pn_"+getNextTaskId()));
@@ -228,7 +226,7 @@ public class Utils {
 			Map<String,BEValue> a = new HashMap<String,BEValue>();
 			a.put("id", new BEValue(selfId));
 			ping.put("a", new BEValue(a));
-			sender.send(new InetSocketAddress(ip,port), new BEValue(ping));
+			NodeServer.updSenders.get(ownerPort).send(new InetSocketAddress(ip,port), new BEValue(ping));
 			log.info("PING : " + ip + " " + port);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -243,8 +241,8 @@ public class Utils {
 	 * @param node 询问对象
 	 * @param infoHahs  种子文件的指纹
 	 */
-	public static void get_peer(byte[] infoHash, String taskId,Node node){
-		get_peer(NodeServer.getLOCAL_ID(), infoHash, taskId, node.getIp(), node.getPort());
+	public static void get_peer(byte[] infoHash, String taskId,Node node, int ownerPort){
+		get_peer(NodeServer.getLOCAL_ID(ownerPort), infoHash, taskId, node.getIp(), node.getPort(),ownerPort);
 	}
 	
 	/**
@@ -255,7 +253,7 @@ public class Utils {
 	 * @param port 询问对象port
 	 * @param infoHahs  种子文件的指纹
 	 */
-	public static void get_peer(byte[] selfID,byte[] infoHash, String taskId, String ip, int port){
+	public static void get_peer(byte[] selfID,byte[] infoHash, String taskId, String ip, int port, int ownerPort){
 		try {
 			Map<String,BEValue> ping = new HashMap<String,BEValue>();
 			ping.put("t", new BEValue("gp_"+taskId));
@@ -266,7 +264,7 @@ public class Utils {
 			a.put("id", new BEValue(selfID));
 			a.put("info_hash", new BEValue(infoHash));
 			ping.put("a", new BEValue(a));
-			sender.send(new InetSocketAddress(ip,port), new BEValue(ping));
+			NodeServer.updSenders.get(ownerPort).send(new InetSocketAddress(ip,port), new BEValue(ping));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -314,8 +312,8 @@ public class Utils {
 	 * @param taskId  事件序列号
 	 * @param CNode 询问对象
 	 */
-	public static void findNode(byte[] targetID, String taskId, Node node){
-		 findNode(NodeServer.getLOCAL_ID(),targetID,taskId,node.getIp(),node.getPort());
+	public static void findNode(byte[] targetID, String taskId, Node node,int ownerPort){
+		 findNode(NodeServer.getLOCAL_ID(ownerPort),targetID,taskId,node.getIp(),node.getPort(),ownerPort);
 	}
 	
 	
@@ -326,7 +324,7 @@ public class Utils {
 	 * @param ip  询问对象IP
 	 * @param port  询问对象Port
 	 */
-	public static void findNode(byte[] selfID, byte[] targetID, String taskId, String ip, int port){
+	public static void findNode(byte[] selfID, byte[] targetID, String taskId, String ip, int port,int ownerPort){
 		try {
 			Map<String,BEValue> ping = new HashMap<String,BEValue>();
 			ping.put("t", new BEValue("fd_"+taskId));
@@ -337,7 +335,7 @@ public class Utils {
 			a.put("id", new BEValue(selfID));
 			a.put("target", new BEValue(targetID));
 			ping.put("a", new BEValue(a));
-			sender.send(new InetSocketAddress(ip,port), new BEValue(ping));
+			NodeServer.updSenders.get(ownerPort).send(new InetSocketAddress(ip,port), new BEValue(ping));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -372,14 +370,6 @@ public class Utils {
 		return  String.valueOf(taskId.incrementAndGet());
 	}
 	
-	
-	public static void startup(){
-		sender = new UdpSender();
-	}
-	
-	public static void shutdown(){
-		sender.shutdown();
-	}
 	
 	public static void analyse(){
 		try {
