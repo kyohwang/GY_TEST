@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,8 +13,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import kyo.utils.SslUtils;
@@ -24,14 +28,19 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
 
+import runner.RunnerManager;
+
+import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 
 public class Downloader implements Runnable{
 	private static Logger  log = Logger.getLogger("world");
-	public static CopyOnWriteArraySet<String> success = new CopyOnWriteArraySet<String>();
-	public static CopyOnWriteArraySet<String> failures = new CopyOnWriteArraySet<String>();
-	public static ConcurrentLinkedQueue<String> todos = new ConcurrentLinkedQueue<String>();
+	private static Logger  logDownload = Logger.getLogger("download");
+	public static Set<String> success = Sets.newHashSet();
+	public static Set<String> failures = Sets.newHashSet();
+	public static LinkedBlockingQueue<String> todos = 	Queues.newLinkedBlockingQueue();
 	
 	static final String XunLei = "http://bt.box.n0808.com/{0}/{1}/{2}.torrent";
 	static final String Vuze = "http://magnet.vuze.com/magnetLookup?hash={0}";
@@ -40,9 +49,9 @@ public class Downloader implements Runnable{
 	
 	static final String[] noNames = {
 		"https://torrasave.top/torrent/{0}.torrent",
-		"https://178.73.198.210/torrent/{0}.torrent",
+//		"https://178.73.198.210/torrent/{0}.torrent",
 		"http://itorrents.org/torrent/{0}.torrent",
-		"http://torrage.com/torrent/{0}.torrent"
+//		"http://torrage.com/torrent/{0}.torrent"
 	};
 	
 	
@@ -66,7 +75,9 @@ public class Downloader implements Runnable{
 		}
 	}
 	
-	public void init(){
+	public static void di(){
+		long start = System.currentTimeMillis();
+		log.info("di init start");
 		String dir = System.getProperty("user.dir");
 		File file = new File(dir,"files");
 		FilenameFilter filter = new FilenameFilter() {
@@ -80,12 +91,46 @@ public class Downloader implements Runnable{
 			}
 		};
 		for(File f : file.listFiles(filter)){
-			success.add(f.getName().split("\\.")[0]);
+			logDownload.info(f.getName().split("\\.")[0]);
 		}
+		log.info("di init finished. cost:" + (System.currentTimeMillis() - start));
+	}
+	
+	public void init(){
+		long start = System.currentTimeMillis();
+		log.info("Downloader init start");
+		String dir = System.getProperty("user.dir");
+		File file = new File(dir,"download");
+		FilenameFilter filter = new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				if(name.contains("download")){
+					return true;
+				}else{
+					return false;
+				}
+			}
+		};
+		log.info("a");
 		
-		for(int i = 0; i < NodeServer.DOWNLOAD_THREADS; i++){
-			new Thread(new DonloadWorker(),"downloadWorker-"+i).start();
+		for(File f : file.listFiles(filter)){
+			log.info(f.getName());
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(f));
+				String line = null;
+				while((line = reader.readLine()) != null){
+					success.add(line);
+					Indexer.todos.add(line);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+		log.info("b");
+		todos.clear();
+		
+		log.info("c");
+		log.info("Downloader init cost: " + (System.currentTimeMillis() - start));
 	}
 
 	@Override
@@ -108,11 +153,12 @@ public class Downloader implements Runnable{
 		
 		if(
 //				downFromXL(infoHash)
-				/*||*/ downFromVuze(infoHash)
+				 // || downFromVuze(infoHash)
 //				|| downFromTorCache(infoHash)
-				|| downFromNoName(infoHash)
+				downFromNoName(infoHash)
 				){
 			success.add(infoHash);
+			logDownload.info(infoHash);
 			try {
 				Utils.printTorrents(infoHash);
 			} catch (IOException e) {
@@ -134,10 +180,17 @@ public class Downloader implements Runnable{
 	}
 	
 	public static void main(String[] args){
-		System.setProperty("javax.net.ssl.trustStore", "jssecacerts");
+//		System.setProperty("javax.net.ssl.trustStore", "jssecacerts");
 //		for(int i = 0; i < 100; i++)
-		Downloader.download("3C4BC61FAA3DA9C22AE857B4B14CC0E7472F789C");
+//		Downloader.download("3C4BC61FAA3DA9C22AE857B4B14CC0E7472F789C");
 //		Downloader.downFromNoName("6E4F1001FFCB4304E38A5157705CD46022CC9B7E");
+		
+		Set<String> set = Sets.newHashSet();
+		
+		for(int i = 0; i < 10000000; i++){
+			set.add(i+"");
+		}
+		
 	}
 	
 	public static boolean downFromXL(String infoHash){
@@ -258,7 +311,7 @@ public class Downloader implements Runnable{
 			    		html += tmp;
 			    	}
 			    	
-//			    	System.out.println(html);
+//			    	log.info("ErrorInfo:" + html);
 			    }else{
 			    	FileOutputStream fs = new FileOutputStream("files/" +infoHash+".torrent");
 			    	ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -274,7 +327,7 @@ public class Downloader implements Runnable{
 			    	}
 			    	fs.close();
 			    	new Torrent(bs.toByteArray());
-			    	log.info("dowanload by:" + noName);
+//			    	log.info("dowanload by:" + noName);
 			    	return true;  
 			    }
 			    

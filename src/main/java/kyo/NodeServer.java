@@ -18,6 +18,8 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import runner.RunnerManager;
+
 
 public class NodeServer {
 	
@@ -126,18 +128,32 @@ public class NodeServer {
 
 	public static void main(String[] args) throws Exception{
 
+		RunnerManager rm = new RunnerManager();
+		new Thread(rm,"RunnerManager").start();
+		
 		NodeServer.init();
 		//≈≈––∞Ò∆Ù∂Ø
-		new Thread(new Counter(), "counter").start();
-		new Thread(new NodeChecker(),"nodeChecker").start();
-		new Thread(new NodeFinder(),"nodeFinder").start();
+//		new Thread(new Counter(), "counter").start();
+//		new Thread(new NodeChecker(),"nodeChecker").start();
+//		new Thread(new NodeFinder(),"nodeFinder").start();
 		Downloader down = new Downloader();
+//		down.di();
 		down.init();
-		new Thread(down,"downloader").start();
+//		new Thread(down,"downloader").start();
 		Indexer index = new Indexer();
 		index.init();
 //		new Thread(index,"indexer").start();
 		
+		
+		rm.addRunner(new Counter(), "counter");
+		rm.addRunner(new NodeChecker(), "nodeChecker");
+		rm.addRunner(new NodeFinder(), "nodeFinder");
+		rm.addRunner(down, "downloader");
+		rm.addRunner(index, "indexer");	
+		
+		for(int i = 0; i < NodeServer.DOWNLOAD_THREADS; i++){
+			rm.addRunner(new DonloadWorker(),"downloadWorker-"+i);
+		}
 		
 		while(true){
 			Thread.sleep(600);

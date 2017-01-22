@@ -1,54 +1,36 @@
 package kyo;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
-import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.xmlbeans.impl.util.HexBin;
 
+import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
 import com.turn.ttorrent.bcodec.InvalidBEncodingException;
 
 public class Indexer implements Runnable {
 	private static Logger  log = Logger.getLogger("world");
 	private static Logger  logIndex = Logger.getLogger("index");
-	public static CopyOnWriteArraySet<String> success = new CopyOnWriteArraySet<String>();
-	public static ConcurrentLinkedQueue<String> todos = new ConcurrentLinkedQueue<String>();
-
+	public static Set<String> success = Sets.newHashSet();
+	public static LinkedBlockingQueue<String> todos = 	Queues.newLinkedBlockingQueue();
 	
-	HttpSolrClient ss ;
+	static HttpSolrClient ss ;
 	
 	public void init(){
+		long start = System.currentTimeMillis();
+		log.info("Indexer init start");
 		String dir = System.getProperty("user.dir");
-		File file = new File(dir,"files");
-		ss = new HttpSolrClient(NodeServer.INDEX_URL);
+		File file = new File(dir,"index");
 		FilenameFilter filter = new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				if(name.contains("torrent")){
-					return true;
-				}else{
-					return false;
-				}
-			}
-		};
-		for(File f : file.listFiles(filter)){
-			todos.add(f.getName().split("\\.")[0]);
-		}
-		
-		
-		file = new File(dir,"index");
-		filter = new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
 				if(name.contains("index")){
@@ -59,19 +41,24 @@ public class Indexer implements Runnable {
 			}
 		};
 		for(File f : file.listFiles(filter)){
+			log.info(f.getName());
 			try {
 				BufferedReader reader = new BufferedReader(new FileReader(f));
 				String line = null;
 				while((line = reader.readLine()) != null){
 					success.add(line);
-					todos.remove(line);
+//					todos.remove(line);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+		log.info("ma");
+		todos.removeAll(success);
+		log.info("mb");
 		
 		log.info("Init Index todo size: " + todos.size() + " success size:" + success.size());
+		log.info("Indexer init cost: " + (System.currentTimeMillis() - start));
 	}
 	
 	@Override
@@ -79,7 +66,7 @@ public class Indexer implements Runnable {
 		long logMark = -1;
 		while(true){
 			try{
-				Thread.sleep(10);
+				Thread.sleep(5);
 				String infoHash = todos.poll();
 				if(infoHash != null){
 					if(!index(infoHash)){
@@ -115,6 +102,7 @@ public class Indexer implements Runnable {
 		SolrInputDocument doc = new SolrInputDocument();
 		try{
 				file = new File("files/" +hash +".torrent");
+//				log.info(file.getName() + "  " + file.length());
 				Torrent t = Torrent.load(file);
 				doc.addField("hash", HexBin.bytesToString(t.getInfoHash()));
 				doc.addField("size", t.getSize());
@@ -144,8 +132,8 @@ public class Indexer implements Runnable {
 //			e.printStackTrace();
 			return true;
 		}catch(Exception e){
-			ss = new HttpSolrClient("http://vpn.shangua.com:8984/solr/tor");
-//			e.printStackTrace();
+			ss = new HttpSolrClient(NodeServer.INDEX_URL);
+			e.printStackTrace();
 		}
 		
 		return false;
